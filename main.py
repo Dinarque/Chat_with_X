@@ -12,13 +12,11 @@ from langchain_tools import build_chat_components, n_rounds, create_chat_icon
 
 
 
-os.environ['HUGGINGFACEHUB_API_TOKEN'] = "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"
-
 st.title("Chat Fighters")
 
 st.subheader("A fun app to imagine the virtual clash between several public figures")
 
-
+st.session_state
 
 
 
@@ -44,7 +42,7 @@ with st.sidebar :
     
     if st.button( "Launch the debate !") :
         
-        fconv, sconv, history = build_chat_components(fc, sc,  fat, sat, theme)
+        fconv, sconv, history = build_chat_components(fc, sc,  fat, sat, theme, st.session_state.OPENAI_API_KEY)
         if n_r > 1 : 
             fconv, sconv, history = n_rounds(fconv,sconv,history,n_r)
         st.session_state.history= history

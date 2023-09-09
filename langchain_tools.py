@@ -18,12 +18,12 @@ from langchain.memory import ConversationBufferMemory
 from stqdm import stqdm 
 
 
-os.environ['OPENAI_API_KEY'] = "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"
+
 
 
 llm_model = "gpt-3.5-turbo"
 
-llm = ChatOpenAI(temperature=0.5, model=llm_model)
+
 
 
 """ The goal of this program is to have a language model dialogue with itself.
@@ -36,7 +36,9 @@ that will be the one displayed via the streamlit interface.
 
 """
 
-def build_chat_components(fc, sc, fat, sat, theme) :
+def build_chat_components(fc, sc, fat, sat, theme, key) :
+    
+    llm = ChatOpenAI(temperature=0.5, model=llm_model, openai_api_key= key)
     """
     builds the 3 components we need, i.e. two conversationnal chains, one for each competitor, and a shared
     """
