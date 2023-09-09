@@ -11,7 +11,9 @@ import os
 from langchain_tools import build_chat_components, n_rounds, create_chat_icon
 
 
+if "cost" not in st.session_state : st.session_state.cost = 0 
 
+st.session_state 
 
 st.image("chat_fighters.jpeg")
 
@@ -41,17 +43,23 @@ with st.sidebar :
     
     image = st.toggle("Display chat icons (more expensive)")
     
+    f"cost of this session : {st.session_state.cost}" 
+    
     if st.button( "Launch the debate !") :
         
-        fconv, sconv, history = build_chat_components(fc, sc,  fat, sat, theme, st.session_state.OPENAI_API_KEY)
+        fconv, sconv, history , cost= build_chat_components(fc, sc,  fat, sat, theme, st.session_state.OPENAI_API_KEY)
+        st.session_state.cost += cost
         if n_r > 1 : 
-            fconv, sconv, history = n_rounds(fconv,sconv,history,n_r)
+            fconv, sconv, history  , cost = n_rounds(fconv,sconv,history,n_r)
+            st.session_state.cost += cost
         st.session_state.history= history
         if image :
             ficon = create_chat_icon(fc, st.session_state.OPENAI_API_KEY)
             sicon = create_chat_icon(sc,st.session_state.OPENAI_API_KEY)
             st.session_state.ficon = ficon
+            st.session_state.cost += 0.016
             st.session_state.sicon = sicon
+            st.session_state.cost += 0.016
       
     
     #on = st.toggle('Speak with the figures yourself')
