@@ -5,7 +5,7 @@ Created on Fri Sep  8 10:54:29 2023
 @author: 3b13j
 """
 import os 
-import torch 
+
 import openai
 
 from diffusers import DiffusionPipeline 
