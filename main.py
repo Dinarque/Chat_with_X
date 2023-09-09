@@ -12,11 +12,12 @@ from langchain_tools import build_chat_components, n_rounds, create_chat_icon
 
 
 
-st.title("Chat Fighters")
+
+st.image("chat_fighters.jpeg")
 
 st.subheader("A fun app to imagine the virtual clash between several public figures")
 
-st.session_state
+
 
 
 
