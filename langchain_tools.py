@@ -15,7 +15,7 @@ from langchain import PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory , ConversationTokenBufferMemory , ConversationSummaryBufferMemory
 from langchain.callbacks import get_openai_callback
 from stqdm import stqdm 
 import streamlit as st
@@ -39,24 +39,36 @@ that will be the one displayed via the streamlit interface.
 
 """
 
-def build_chat_components(fc, sc, fat, sat, theme, key) :
+def build_chat_components(fc, sc, fat, sat, theme, key, memory = "" ) :
     
     with get_openai_callback() as cb:
         llm = ChatOpenAI(temperature=0.5, model=llm_model, openai_api_key= key)
         """
         builds the 3 components we need, i.e. two conversationnal chains, one for each competitor, and a shared
         """
-        
-        fmemory = ConversationBufferMemory()
-        smemory = ConversationBufferMemory()
+        if memory == 'Buffer Memory':
+            fmemory  = ConversationBufferWindowMemory(k=1) 
+            smemory  = ConversationBufferWindowMemory(k=1) 
+        elif memory == 'Buffer Window Memory': 
+            fmemory  = ConversationTokenBufferMemory(llm=llm, max_token_limit=100)
+            smemory  = ConversationTokenBufferMemory(llm=llm, max_token_limit=100)
+        elif memory == 'Summary Memory':
+            fmemory = ConversationSummaryBufferMemory(llm=llm, max_token_limit=100)
+            smemory = ConversationSummaryBufferMemory(llm=llm, max_token_limit=100)
+        else :
+            fmemory = ConversationBufferMemory()
+            smemory = ConversationBufferMemory()
         
         # fc is asked si he answers first
         init_prompt = f"Hello {sc}, What do you think about {theme}"
+        init_prompt, cost = correct(init_prompt, key)
+        
         smemory.save_context({"input": "Hi"}, 
                         {"output": init_prompt})
         
+        
         # Instead of creating a first prompt and then injecting it in the PromptTemplate Constructor, we could have created a custom ConversationChain subclass that accepts a prompt with two more inputs, fc and sc, but this would have been more technical 
-        fsent =  f'The following is a thorought conversation between {sc} and you. You are {fc}.You are {fat}. Do not start your answer with {fc} name. Your answer must move the conversation forward and you disagree with {sc} but stay coherent in your argumentation.'
+        fsent =  f"Engage in a detailed conversation with {sc}, where you assume the role of {fc}. You are {fat}. Avoid initiating your responses with {fc}'s name. Keep your responses focused on constructive disagreement with {sc}, maintain logical coherence, ensure they are shorter than 5 sentences, and avoid repetition at all cost."
         fprompt = PromptTemplate(
             input_variables=['history', 'input'],
             output_parser=None,
@@ -66,7 +78,7 @@ def build_chat_components(fc, sc, fat, sat, theme, key) :
             validate_template=True
             )
         
-        ssent =  f'The following is a thorought conversation between {fc} and you. You are {sc}.You are {sat}.Do not provide paratext.Do not start your answer with {sc} name. Your answer must move the conversation forward.'
+        ssent =   f"Engage in a detailed conversation with {fc}, where you assume the role of {sc}. You are {sat}. Avoid initiating your responses with {sc}'s name. Keep your responses focused on constructive disagreement with {fc} , maintain logical coherence, ensure they are shorter than 5 sentences, and avoid repetition at all cost."
         sprompt = PromptTemplate(
             input_variables=['history', 'input'],
             output_parser=None,
@@ -99,7 +111,7 @@ def build_chat_components(fc, sc, fat, sat, theme, key) :
         common_memory.append([fc, fanswer])
         
         
-        return fconversation, sconversation, common_memory, cb.total_cost
+        return fconversation, sconversation, common_memory, cb.total_cost + cost
         
 def one_round(fconversation, sconversation, common_memory) :
         
@@ -109,12 +121,12 @@ def one_round(fconversation, sconversation, common_memory) :
     finput = common_memory[-1][1]
     with get_openai_callback() as cb:
         sanswer = sconversation.predict(input = finput)
-    total_cost+= cb.total_cost
-    common_memory.append([sc, sanswer])
+        total_cost+= cb.total_cost
+        common_memory.append([sc, sanswer])
     with get_openai_callback() as cb2:
         fanswer = fconversation.predict(input = sanswer)
-    total_cost+= cb2.total_cost
-    common_memory.append([fc, fanswer])
+        total_cost+= cb2.total_cost
+        common_memory.append([fc, fanswer])
         
     
     return fconversation, sconversation, common_memory, total_cost
@@ -174,6 +186,6 @@ def optimize_prompt(prompt, key) :
     return answ, cb.total_cost
     
     
-   
+
     
      

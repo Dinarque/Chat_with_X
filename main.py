@@ -5,7 +5,7 @@ Created on Thu Sep  7 10:36:22 2023
 @author: 3b13j
 """
 import streamlit as st
-from langchain_tools import build_chat_components, n_rounds, correct, create_chat_icon, optimize_prompt
+from langchain_tools import build_chat_components, one_round, n_rounds, correct, create_chat_icon, optimize_prompt
 
 
 if "cost" not in st.session_state : st.session_state.cost = 0 
@@ -22,6 +22,7 @@ st.image("chat_fighters.jpeg")
 l(" ")
 l("A fun app to imagine the virtual clash between several public figures.", position = "center")
 "___"
+
 
 
 with st.sidebar :
@@ -42,13 +43,17 @@ with st.sidebar :
     
     n_r = st.number_input("Number of rounds", min_value=1, max_value=10, value=3)
     
+    memory_type = st.selectbox( 'Choose Memory type (influence cost, read  Langchain documentation) ',
+    ('Learn on all', 'Buffer Memory', 'Buffer Window Memory', 'Summary Memory'))
+    
     image = st.toggle("Display chat icons (more expensive)")
     
-    f"cost of this session : {st.session_state.cost}" 
+    f"cost of this session : {st.session_state.cost} $" 
     
     if st.button( "Launch the debate !") :
         
-        fconv, sconv, history , cost= build_chat_components(fc, sc,  fat, sat, theme, st.session_state.OPENAI_API_KEY)
+        st.session_state.memory = memory_type
+        fconv, sconv, history , cost= build_chat_components(fc, sc,  fat, sat, theme, st.session_state.OPENAI_API_KEY, memory_type)
         st.session_state.cost += cost
         if n_r > 1 : 
             fconv, sconv, history  , cost = n_rounds(fconv,sconv,history,n_r)
@@ -57,21 +62,25 @@ with st.sidebar :
         if image :
             try :
                 ficon = create_chat_icon(fc, st.session_state.OPENAI_API_KEY)
+                st.session_state.ficon = ficon
+                st.session_state.cost += 0.016
             except :
                 l(f"Sorry Dallee refused to create an image for {fc} ")
             try :
                 sicon = create_chat_icon(sc,st.session_state.OPENAI_API_KEY)
+                st.session_state.sicon = sicon
+                st.session_state.cost += 0.016
             except :
                 l(f"Sorry Dallee refused to create an image for {sc} ")
-            st.session_state.ficon = ficon
-            st.session_state.cost += 0.016
-            st.session_state.sicon = sicon
-            st.session_state.cost += 0.016
-            st.session_state.sentence, cost = correct(f"They are gonna debate on {theme}",st.session_state.OPENAI_API_KEY )
-            st.session_state.cost+= cost
+           
+            
+        st.session_state.sentence, cost = correct(f"They are gonna debate on {theme}",st.session_state.OPENAI_API_KEY )
+        st.session_state.cost+= cost
+        
+        st.session_state.fconv = fconv
+        st.session_state.sconv = sconv
       
-    
-    #on = st.toggle('Speak with the figures yourself')
+        st.experimental_rerun()
     
     
 if OPENAI_API_KEY != "Provide key"  and "history" in st.session_state : 
@@ -108,9 +117,14 @@ if OPENAI_API_KEY != "Provide key"  and "history" in st.session_state :
         
         
         
-    prompt = st.chat_input("Dont be shy")
+    if st.button("One more round ?") :
+        
+        st.session_state.fconv, st.session_state.sconv, st.session_state.history , cost = one_round(st.session_state.fconv, st.session_state.sconv, st.session_state.history)
+        st.session_state.cost += cost
+        st.experimental_rerun()
 
 
 
 else :  
     st.header("You must provide a valid key and click on the button for the app to run")
+    
