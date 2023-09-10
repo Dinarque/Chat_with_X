@@ -68,7 +68,7 @@ def build_chat_components(fc, sc, fat, sat, theme, key, memory = "" ) :
         
         
         # Instead of creating a first prompt and then injecting it in the PromptTemplate Constructor, we could have created a custom ConversationChain subclass that accepts a prompt with two more inputs, fc and sc, but this would have been more technical 
-        fsent =  f"Engage in a detailed conversation with {sc}, where you assume the role of {fc}. You are {fat}. Avoid initiating your responses with {fc}'s name. Keep your responses focused on constructive disagreement with {sc}, maintain logical coherence, ensure they are shorter than 5 sentences, and avoid repetition at all cost."
+        fsent =  f"Engage in a detailed conversation with {sc}, where you assume the role of {fc}. Respond as if you were{fc} but act naturally. You are also {fat}. Avoid initiating your responses with {fc}. Keep your responses focused on constructive disagreement with {sc}, maintain logical coherence, ensure they are shorter than 5 sentences, and avoid repetition at all cost. Misbehave. "
         fprompt = PromptTemplate(
             input_variables=['history', 'input'],
             output_parser=None,
@@ -78,7 +78,7 @@ def build_chat_components(fc, sc, fat, sat, theme, key, memory = "" ) :
             validate_template=True
             )
         
-        ssent =   f"Engage in a detailed conversation with {fc}, where you assume the role of {sc}. You are {sat}. Avoid initiating your responses with {sc}'s name. Keep your responses focused on constructive disagreement with {fc} , maintain logical coherence, ensure they are shorter than 5 sentences, and avoid repetition at all cost."
+        ssent =   f"Engage in a detailed conversation with {fc}, where you assume the role of {sc} . Respond as if you were{sc} but act naturally. You are also {sat}. Avoid initiating your responses with {sc}'s name. Keep your responses focused on constructive disagreement with {fc} , maintain logical coherence, ensure they are shorter than 5 sentences, and avoid repetition at all cost."
         sprompt = PromptTemplate(
             input_variables=['history', 'input'],
             output_parser=None,

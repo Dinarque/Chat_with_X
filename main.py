@@ -53,6 +53,7 @@ with st.sidebar :
     if st.button( "Launch the debate !") :
         
         st.session_state.memory = memory_type
+        
         fconv, sconv, history , cost= build_chat_components(fc, sc,  fat, sat, theme, st.session_state.OPENAI_API_KEY, memory_type)
         st.session_state.cost += cost
         if n_r > 1 : 
