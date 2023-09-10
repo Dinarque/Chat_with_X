@@ -13,10 +13,12 @@ from diffusers import DiffusionPipeline
 
 from langchain import PromptTemplate
 from langchain.chat_models import ChatOpenAI
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 from langchain.callbacks import get_openai_callback
 from stqdm import stqdm 
+import streamlit as st
 
 
 
@@ -101,24 +103,32 @@ def build_chat_components(fc, sc, fat, sat, theme, key) :
         
 def one_round(fconversation, sconversation, common_memory) :
         
+    total_cost = 0
     sc = common_memory[-2][0]
     fc = common_memory[-1][0]
     finput = common_memory[-1][1]
-    sanswer = sconversation.predict(input = finput)
+    with get_openai_callback() as cb:
+        sanswer = sconversation.predict(input = finput)
+    total_cost+= cb.total_cost
     common_memory.append([sc, sanswer])
-    fanswer = fconversation.predict(input = sanswer)
+    with get_openai_callback() as cb2:
+        fanswer = fconversation.predict(input = sanswer)
+    total_cost+= cb2.total_cost
     common_memory.append([fc, fanswer])
         
     
-    return fconversation, sconversation, common_memory
+    return fconversation, sconversation, common_memory, total_cost
     
     
 def n_rounds(fconversation, sconversation, common_memory, n) : 
-    with get_openai_callback() as cb:
-    
-        for i in range(int(n)) :
-            fconversation, sconversation, common_memory = one_round(fconversation, sconversation, common_memory)
-            return fconversation, sconversation, common_memory , cb.total_cost
+   
+
+   total_cost = 0
+   for i in range(int(n)) :
+       fconversation, sconversation, common_memory, cost = one_round(fconversation, sconversation, common_memory)
+       total_cost+= cost
+       
+   return fconversation, sconversation, common_memory , total_cost
     
 
 
@@ -133,4 +143,37 @@ def create_chat_icon(name, key) :
     )
 
     return response["data"][0]["url"]
+
+
+def correct(prompt, key) :
+    chat = ChatOpenAI(temperature=0, openai_api_key=key)
+    messages = [
+    SystemMessage(
+        content="Return a perfectly correct version of the sentence :"
+    ),
+    HumanMessage(
+        content=f"{prompt}"
+    )
+    ]
+    with get_openai_callback() as cb:
+        answ = chat(messages).content
+    return answ, cb.total_cost 
+
+def optimize_prompt(prompt, key) :
+    chat = ChatOpenAI(temperature=0, openai_api_key=key)
+    messages = [
+    SystemMessage(
+        content="You optimize prompts for gpt-3.5-turbo.  "
+    ),
+    HumanMessage(
+        content=f"{prompt}"
+    )
+    ]
+    with get_openai_callback() as cb:
+        answ = chat(messages).content
+    return answ, cb.total_cost
+    
+    
+   
+    
      

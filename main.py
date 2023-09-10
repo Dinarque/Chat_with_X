@@ -5,22 +5,23 @@ Created on Thu Sep  7 10:36:22 2023
 @author: 3b13j
 """
 import streamlit as st
-
-import os
-
-from langchain_tools import build_chat_components, n_rounds, create_chat_icon
+from langchain_tools import build_chat_components, n_rounds, correct, create_chat_icon, optimize_prompt
 
 
 if "cost" not in st.session_state : st.session_state.cost = 0 
 
-st.session_state 
+# some quick displaying tools 
+def l(text, position = "justify") :
+    return st.markdown(just(text, position), unsafe_allow_html=True)
+def just(text, position = "justify") :     
+    return f'<div style="text-align: {position};">'+text+'</div>'
+
 
 st.image("chat_fighters.jpeg")
 
-st.subheader("A fun app to imagine the virtual clash between several public figures")
-
-
-
+l(" ")
+l("A fun app to imagine the virtual clash between several public figures.", position = "center")
+"___"
 
 
 with st.sidebar :
@@ -54,12 +55,20 @@ with st.sidebar :
             st.session_state.cost += cost
         st.session_state.history= history
         if image :
-            ficon = create_chat_icon(fc, st.session_state.OPENAI_API_KEY)
-            sicon = create_chat_icon(sc,st.session_state.OPENAI_API_KEY)
+            try :
+                ficon = create_chat_icon(fc, st.session_state.OPENAI_API_KEY)
+            except :
+                l(f"Sorry Dallee refused to create an image for {fc} ")
+            try :
+                sicon = create_chat_icon(sc,st.session_state.OPENAI_API_KEY)
+            except :
+                l(f"Sorry Dallee refused to create an image for {sc} ")
             st.session_state.ficon = ficon
             st.session_state.cost += 0.016
             st.session_state.sicon = sicon
             st.session_state.cost += 0.016
+            st.session_state.sentence, cost = correct(f"They are gonna debate on {theme}",st.session_state.OPENAI_API_KEY )
+            st.session_state.cost+= cost
       
     
     #on = st.toggle('Speak with the figures yourself')
@@ -86,7 +95,7 @@ if OPENAI_API_KEY != "Provide key"  and "history" in st.session_state :
         else : sim = None
             
     "___"
-    st.subheader(f"They are gonna debate on {theme}")
+    if 'sentence' in st.session_state : st.subheader(st.session_state.sentence)
 
     "___"
     
@@ -105,15 +114,3 @@ if OPENAI_API_KEY != "Provide key"  and "history" in st.session_state :
 
 else :  
     st.header("You must provide a valid key and click on the button for the app to run")
-
-
-user_message = "Hello, whats the weather in San Francisco??"
-messages = [{ "content": user_message,"role": "user"}]
-
-
-
-
-
-
-
-
