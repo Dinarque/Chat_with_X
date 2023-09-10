@@ -32,14 +32,14 @@ with st.sidebar :
     OPENAI_API_KEY = st.text_input("OpenAI API Key", "Provide key", type="password")
     st.session_state.OPENAI_API_KEY = OPENAI_API_KEY
     c, v = st.columns(2)
-    fc = c.text_input('First Contestant', 'Plato')
+    fc = c.text_input('First Contestant', 'Spider Queen')
     fat = c.text_input("Describe attitude", 'neutral')
-    sc = v.text_input('Second Contestant', 'Aristotle')
+    sc = v.text_input('Second Contestant', 'King Arthur')
     sat = v.text_input("Describe attitude", 'stubborn')
     
     
     
-    theme = st.text_input('Ontological question', 'What is the meaning of life ?')
+    theme = st.text_input('Ontological question', 'Do you like me ?')
     
     n_r = st.number_input("Number of rounds", min_value=1, max_value=10, value=3)
     
